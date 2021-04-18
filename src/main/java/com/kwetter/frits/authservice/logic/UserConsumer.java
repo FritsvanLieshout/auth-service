@@ -11,6 +11,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -32,12 +33,14 @@ public class UserConsumer {
     public static final String TOPIC = "user-register";
 
     private KafkaConsumer<String, String> kafkaConsumer;
-    private UserRepository userRepository;
-    private ExecutorService executorService = Executors.newCachedThreadPool();
+    private final UserRepository userRepository;
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final PasswordEncoder passwordEncoder;
 
-    public UserConsumer(KafkaProperties kafkaProperties, UserRepository userRepository) {
+    public UserConsumer(KafkaProperties kafkaProperties, UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.kafkaProperties = kafkaProperties;
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
@@ -58,7 +61,7 @@ public class UserConsumer {
 
                         ObjectMapper objectMapper = new ObjectMapper();
                         UserAuthDTO userAuthDTO = objectMapper.readValue(record.value(), UserAuthDTO.class);
-                        User user = new User(userAuthDTO.getUserId(), userAuthDTO.getUsername(), userAuthDTO.getPassword(), KWETTER_USER.name());
+                        User user = new User(userAuthDTO.getUserId(), userAuthDTO.getUsername(), passwordEncoder.encode(userAuthDTO.getPassword()), KWETTER_USER.name());
                         userRepository.save(user);
                     }
                 }
