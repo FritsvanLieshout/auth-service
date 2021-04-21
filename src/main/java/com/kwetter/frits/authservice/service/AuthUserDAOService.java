@@ -38,9 +38,13 @@ public class AuthUserDAOService implements AuthUserDAO {
     }
 
     private UserRole getRole(String role) {
-        if ("ADMIN".equals(role)) {
-            return UserRole.ADMIN;
+        switch (role) {
+            case "KWETTER_ADMIN":
+                return UserRole.KWETTER_ADMIN;
+            case "KWETTER_MODERATOR":
+                return UserRole.KWETTER_MODERATOR;
+            default:
+                return UserRole.KWETTER_USER;
         }
-        return UserRole.KWETTER_USER;
     }
 }
