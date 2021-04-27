@@ -1,5 +1,6 @@
 package com.kwetter.frits.authservice.configuration;
 
+import com.kwetter.frits.authservice.jwt.JwtUtil;
 import com.kwetter.frits.authservice.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.kwetter.frits.authservice.jwt.JwtVerifier;
 import com.kwetter.frits.authservice.service.AuthUserService;
@@ -15,6 +16,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -27,23 +30,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private AuthUserService authUserService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        JwtUsernameAndPasswordAuthenticationFilter authenticationFilter = new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager());
-        authenticationFilter.setFilterProcessesUrl("/api/auth/login");
+        JwtUsernameAndPasswordAuthenticationFilter authenticationFilter = new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtUtil);
+        authenticationFilter.setFilterProcessesUrl(jwtUtil.getUri());
 
         http
                 .csrf().disable()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                //.exceptionHandling().authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)).and()
                 .addFilter(authenticationFilter)
-                .addFilterAfter(new JwtVerifier(), JwtUsernameAndPasswordAuthenticationFilter.class)
+                .addFilterAfter(new JwtVerifier(jwtUtil), JwtUsernameAndPasswordAuthenticationFilter.class)
                 .authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .antMatchers(HttpMethod.POST, jwtUtil.getUri()).permitAll()
                 .anyRequest()
-                .authenticated();
+                .authenticated().and().logout()
+                .logoutRequestMatcher(new AntPathRequestMatcher("/api/auth/logout", "PUT")).permitAll()
+                .logoutSuccessHandler(logoutSuccessHandler())
+                .logoutSuccessUrl("/api/auth/login").deleteCookies("Authorization");
+
     }
 
     @Override
@@ -58,4 +67,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         provider.setUserDetailsService(authUserService);
         return provider;
     }
+
+    @Bean
+    public LogoutSuccessHandler logoutSuccessHandler() {
+        return new CustomLogoutSuccessHandler();
+    }
+
 }

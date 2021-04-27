@@ -18,15 +18,16 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.security.Key;
-import java.time.LocalDate;
 import java.util.Date;
 
 public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
-    public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager manager) {
+    public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager manager, JwtUtil jwtUtil) {
         this.authenticationManager = manager;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -50,22 +51,23 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
-        String secretKey = "securesecuresecuresecuresecuresecuresecuresecuresecuresecuresecurekwetter"; //todo centrale plek
 
-        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(secretKey);
+        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(jwtUtil.getSecret());
         Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
+        Long now = System.currentTimeMillis();
 
         String token = Jwts.builder()
                 .setSubject(authResult.getName())
                 .claim("authorities", authResult.getAuthorities())
-                .setIssuedAt(new Date())
-                .setExpiration(java.sql.Date.valueOf(LocalDate.now().plusDays(10)))
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + jwtUtil.getExpiration()))
                 .signWith(signatureAlgorithm, signingKey)
                 .compact();
 
-        Cookie cookie = new Cookie("Authorization", token);
+        Cookie cookie = new Cookie(jwtUtil.getHeader(), token);
         cookie.setHttpOnly(true);
         cookie.setSecure(false);
+        cookie.setPath("/");
         response.addCookie(cookie);
     }
 }

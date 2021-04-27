@@ -24,10 +24,15 @@ import java.util.stream.Collectors;
 
 public class JwtVerifier extends OncePerRequestFilter {
 
+    private final JwtUtil jwtUtil;
+
+    public JwtVerifier(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         Cookie[] cookies = request.getCookies();
-
         if (cookies == null) {
             filterChain.doFilter(request, response);
             return;
@@ -35,7 +40,7 @@ public class JwtVerifier extends OncePerRequestFilter {
 
         String token = null;
         for (Cookie cookie : cookies) {
-            if (Strings.isNullOrEmpty(cookie.getValue()) && !cookie.getName().equals("Authorization")) {
+            if (Strings.isNullOrEmpty(cookie.getValue()) && !cookie.getName().equals(jwtUtil.getHeader())) {
                 filterChain.doFilter(request, response);
                 return;
             } else {
@@ -44,23 +49,17 @@ public class JwtVerifier extends OncePerRequestFilter {
         }
 
         try {
-            //todo
-            String secretKey = "securesecuresecuresecuresecuresecuresecuresecuresecuresecuresecurekwetter";
-
             SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
-            byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(secretKey);
+            byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(jwtUtil.getSecret());
             Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
 
             Jws<Claims> claimsJws = Jwts.parser()
-                    .setSigningKey(DatatypeConverter.parseBase64Binary(secretKey))
+                    .setSigningKey(signingKey)
                     .parseClaimsJws(token);
 
             Claims body = claimsJws.getBody();
-
             String username = body.getSubject();
-
             var authorities = (List<Map<String, String>>) body.get("authorities");
-
             Set<SimpleGrantedAuthority> simpleGrantedAuthorities = authorities.stream()
                     .map(m -> new SimpleGrantedAuthority(m.get("authority")))
                     .collect(Collectors.toSet());
