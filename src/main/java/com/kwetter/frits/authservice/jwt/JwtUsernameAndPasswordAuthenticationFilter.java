@@ -67,6 +67,7 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
         Cookie cookie = new Cookie(jwtUtil.getHeader(), token);
         cookie.setHttpOnly(true);
         cookie.setSecure(false);
+        cookie.setPath("/");
         response.addCookie(cookie);
     }
 }

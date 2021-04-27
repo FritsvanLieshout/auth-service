@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,7 +62,9 @@ public class UserConsumer {
 
                         ObjectMapper objectMapper = new ObjectMapper();
                         UserAuthDTO userAuthDTO = objectMapper.readValue(record.value(), UserAuthDTO.class);
-                        User user = new User(userAuthDTO.getUserId(), userAuthDTO.getUsername(), passwordEncoder.encode(userAuthDTO.getPassword()), KWETTER_USER.name());
+                        byte[] decodedBytes = Base64.getDecoder().decode(userAuthDTO.getPassword());
+                        String password = new String(decodedBytes);
+                        User user = new User(userAuthDTO.getUserId(), userAuthDTO.getUsername(), passwordEncoder.encode(password), KWETTER_USER.name());
                         userRepository.save(user);
                     }
                 }

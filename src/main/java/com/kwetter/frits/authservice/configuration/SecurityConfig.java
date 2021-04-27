@@ -16,6 +16,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -46,7 +48,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST, jwtUtil.getUri()).permitAll()
                 .anyRequest()
-                .authenticated();
+                .authenticated().and().logout()
+                .logoutRequestMatcher(new AntPathRequestMatcher("/api/auth/logout", "PUT")).permitAll()
+                .logoutSuccessHandler(logoutSuccessHandler())
+                .logoutSuccessUrl("/api/auth/login").deleteCookies("Authorization");
+
     }
 
     @Override
@@ -61,4 +67,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         provider.setUserDetailsService(authUserService);
         return provider;
     }
+
+    @Bean
+    public LogoutSuccessHandler logoutSuccessHandler() {
+        return new CustomLogoutSuccessHandler();
+    }
+
 }
