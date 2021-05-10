@@ -60,11 +60,11 @@ public class UserConsumer {
                     for (ConsumerRecord<String, String> record : records) {
                         log.info("Consumed message in {} : {}", TOPIC, record.value());
 
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        UserAuthDTO userAuthDTO = objectMapper.readValue(record.value(), UserAuthDTO.class);
+                        var objectMapper = new ObjectMapper();
+                        var userAuthDTO = objectMapper.readValue(record.value(), UserAuthDTO.class);
                         byte[] decodedBytes = Base64.getDecoder().decode(userAuthDTO.getPassword());
-                        String password = new String(decodedBytes);
-                        User user = new User(userAuthDTO.getUserId(), userAuthDTO.getUsername(), passwordEncoder.encode(password), KWETTER_USER.name());
+                        var password = new String(decodedBytes);
+                        var user = new User(userAuthDTO.getUserId(), userAuthDTO.getUsername(), passwordEncoder.encode(password), KWETTER_USER.name());
                         userRepository.save(user);
                     }
                 }

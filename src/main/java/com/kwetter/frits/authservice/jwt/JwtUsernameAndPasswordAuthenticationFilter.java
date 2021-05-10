@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 
 public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -36,13 +37,14 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
             UsernameAndPasswordAuthenticationRequest authenticationRequest = new ObjectMapper()
                     .readValue(request.getInputStream(), UsernameAndPasswordAuthenticationRequest.class);
 
+            byte[] decodedBytes = Base64.getDecoder().decode(authenticationRequest.getPassword());
+            var password = new String(decodedBytes);
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     authenticationRequest.getUsername(),
-                    authenticationRequest.getPassword()
+                    password
             );
 
-            Authentication authenticate = authenticationManager.authenticate(authentication);
-            return authenticate;
+            return authenticationManager.authenticate(authentication);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -50,11 +52,10 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
-
+        var signatureAlgorithm = SignatureAlgorithm.HS256;
         byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(jwtUtil.getSecret());
         Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
-        Long now = System.currentTimeMillis();
+        var now = System.currentTimeMillis();
 
         String token = Jwts.builder()
                 .setSubject(authResult.getName())
@@ -64,7 +65,7 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
                 .signWith(signatureAlgorithm, signingKey)
                 .compact();
 
-        Cookie cookie = new Cookie(jwtUtil.getHeader(), token);
+        var cookie = new Cookie(jwtUtil.getHeader(), token);
         cookie.setHttpOnly(true);
         cookie.setSecure(false);
         cookie.setPath("/");
