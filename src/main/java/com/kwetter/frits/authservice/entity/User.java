@@ -5,11 +5,13 @@ import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
 @Entity
-@Table(name = "user")
+@Table(name = "user" , uniqueConstraints = { @UniqueConstraint(columnNames = "userId")})
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
     private UUID userId;
 
     @NotNull(message = "Username cannot be empty!")
@@ -30,6 +32,10 @@ public class User {
         this.password = password;
         this.role = role;
     }
+
+    public Long getId() { return id; }
+
+    public void setId(Long id) { this.id = id; }
 
     public UUID getUserId() { return userId; }
 
