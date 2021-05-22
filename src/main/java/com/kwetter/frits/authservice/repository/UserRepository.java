@@ -1,11 +1,14 @@
 package com.kwetter.frits.authservice.repository;
 
 import com.kwetter.frits.authservice.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
+import javax.transaction.Transactional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, UUID> {
+@Transactional
+public interface UserRepository extends CrudRepository<User, Long> {
+    User findUserByUsername(String username);
+    long deleteByUsername(String username);
 }

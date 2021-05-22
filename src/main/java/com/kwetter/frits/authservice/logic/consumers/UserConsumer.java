@@ -1,4 +1,4 @@
-package com.kwetter.frits.authservice.logic;
+package com.kwetter.frits.authservice.logic.consumers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kwetter.frits.authservice.configuration.KafkaProperties;
