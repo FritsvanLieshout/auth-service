@@ -20,4 +20,28 @@ steps:
     jdkArchitectureOption: 'x64'
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
+    goals: 'clean package'
+
+- task: DockerInstaller@0
+  inputs:
+    dockerVersion: '17.09.0-ce'
+
+- task: Docker@2
+  inputs:
+    containerRegistry: 'kwetter-frits'
+    command: 'login'
+    addPipelineData: false
+
+- task: Docker@2
+  inputs:
+    containerRegistry: 'kwetter-frits'
+    repository: 'kwetterfrits/timeline-service'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'
+    tags: 'latest'
+
+- task: Docker@2
+  inputs:
+    containerRegistry: 'kwetter-frits'
+    command: 'logout'
+    addPipelineData: false
