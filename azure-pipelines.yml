@@ -35,7 +35,7 @@ steps:
 - task: Docker@2
   inputs:
     containerRegistry: 'kwetter-frits'
-    repository: 'kwetterfrits/timeline-service'
+    repository: 'kwetterfrits/auth-service'
     command: 'buildAndPush'
     Dockerfile: '**/Dockerfile'
     tags: 'latest'
