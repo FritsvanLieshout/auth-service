@@ -3,6 +3,8 @@ package com.kwetter.frits.authservice.jwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -65,10 +67,18 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
                 .signWith(signatureAlgorithm, signingKey)
                 .compact();
 
-        var cookie = new Cookie(jwtUtil.getHeader(), token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        response.addCookie(cookie);
+//        var cookie = new Cookie(jwtUtil.getHeader(), token);
+//        cookie.setHttpOnly(true);
+//        cookie.setSecure(false);
+//        cookie.setPath("/");
+//        response.addCookie(cookie);
+        var cookie = ResponseCookie.from(jwtUtil.getHeader(), token)
+                .maxAge(-1)
+                .secure(false)
+                .httpOnly(true)
+                .sameSite("None")
+                .path("/")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }
