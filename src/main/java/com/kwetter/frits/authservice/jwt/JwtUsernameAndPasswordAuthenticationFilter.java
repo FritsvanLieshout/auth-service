@@ -67,18 +67,10 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
                 .signWith(signatureAlgorithm, signingKey)
                 .compact();
 
-//        var cookie = new Cookie(jwtUtil.getHeader(), token);
-//        cookie.setHttpOnly(true);
-//        cookie.setSecure(false);
-//        cookie.setPath("/");
-//        response.addCookie(cookie);
-        var cookie = ResponseCookie.from(jwtUtil.getHeader(), token)
-                .maxAge(-1)
-                .secure(false)
-                .httpOnly(true)
-                .sameSite("None")
-                .path("/")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        var cookie = new Cookie(jwtUtil.getHeader(), token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        response.addCookie(cookie);
     }
 }
